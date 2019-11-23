@@ -13,8 +13,8 @@ import java.util.logging.Logger;
 // TODO: check this works for arrays and enums!!
 public class AvroToAvroConverter {
     private final static Logger LOGGER = Logger.getLogger(AvroToAvroConverter.class.getName());
-    private final static String INPUT_FIELD_ERROR = "Could not find a field named: %s on input schema";
-    private final static String OUTPUT_FIELD_ERROR = "Could not find a field named: %s on output schema";
+    private final static String INPUT_FIELD_ERROR = "Could not find a field named: %s on input schema: %s";
+    private final static String OUTPUT_FIELD_ERROR = "Could not find a field named: %s on output schema: %s";
     private static List<String> requiredFieldsOnOutSchema = new ArrayList<>();
 
     private static Object getInputRecordValue(SpecificRecordBase inputRecord, Queue<String> inputPath) {
@@ -46,10 +46,11 @@ public class AvroToAvroConverter {
             throws ClassNotFoundException {
         SpecificRecordBase currentRecord = outputRecord;
         Schema schema = outputRecord.getSchema();
-        Schema.Field field = null;
+        Schema.Field field;
+        String currentOutputPath = null;
 
         while (outputPath.size() > 1) {
-            String currentOutputPath = outputPath.remove();
+            currentOutputPath = outputPath.remove();
             field = tryGettingFieldFromSchema(schema, currentOutputPath, OUTPUT_FIELD_ERROR);
 
             schema = field.schema();
@@ -59,8 +60,16 @@ public class AvroToAvroConverter {
             currentRecord = getInnerRecord(currentRecord, field);
         }
 
-        if (field != null) {
+        currentOutputPath = outputPath.remove();
+        field = tryGettingFieldFromSchema(schema, currentOutputPath, OUTPUT_FIELD_ERROR);
+        schema = field.schema();
+
+        try {
             currentRecord.put(fieldOutName, value);
+        } catch (ClassCastException e) {
+            throw new RuntimeException(String.format(
+                    "Could not cast field %s because of different type on input schema %s than expected %s on output schema",
+                    fieldOutName, value.getClass(), schema.getFullName()));
         }
     }
 
@@ -71,7 +80,7 @@ public class AvroToAvroConverter {
     private static Schema.Field tryGettingFieldFromSchema(Schema schema, String currentPath, String errorMessage) {
         Schema.Field field = schema.getField(currentPath);
 
-        Objects.requireNonNull(field, String.format(errorMessage, currentPath));
+        Objects.requireNonNull(field, String.format(errorMessage, currentPath, schema.getFullName()));
         return field;
     }
 
