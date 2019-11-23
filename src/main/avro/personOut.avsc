@@ -1,0 +1,18 @@
+{
+  "namespace": "example.generated",
+  "type": "record",
+  "name": "BdPersonOut",
+  "fields": [
+  {
+    "name": "identificationout",
+    "type": {
+      "name": "IdentificationOut",
+      "type": "record",
+      "fields": [
+      {"name": "idout", "type": "int"},
+      {"name": "usernameout",  "type": "string"}
+      ]}
+  },
+  {"name": "height", "type": ["null", "double"], "default": null}
+  ]
+}
