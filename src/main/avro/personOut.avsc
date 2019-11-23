@@ -11,11 +11,19 @@
       "fields": [
       {
         "name": "idout",
-        "type": "int"
+        "type": [
+          "null",
+          "int"
+        ],
+        "default": null
       },
       {
         "name": "usernameout",
-        "type": "string"
+        "type": [
+          "null",
+          "string"
+        ],
+        "default": null
       }
       ]
     }

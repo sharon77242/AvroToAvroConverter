@@ -5,24 +5,31 @@
   "fields": [
   {
     "name": "identification",
-    "type": {
-      "name": "Identification",
-      "type": "record",
-      "fields": [
+    "type": [
+      "null",
       {
-        "name": "id",
-        "type": "int"
-      },
-      {
-        "name": "username",
-        "type": [
-          "null",
-          "string"
-        ],
-        "default": null
+        "name": "Identification",
+        "type": "record",
+        "fields": [
+        {
+          "name": "id",
+          "type": [
+            "null",
+            "int"
+          ],
+          "default": null
+        },
+        {
+          "name": "username",
+          "type": [
+            "null",
+            "string"
+          ],
+          "default": null
+        }
+        ]
       }
-      ]
-    }
+    ]
   },
   {
     "name": "cards",

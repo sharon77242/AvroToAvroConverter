@@ -10,6 +10,13 @@ import java.util.logging.Logger;
 
 // TODO: add unit tests
 // TODO: add documentation
+
+
+/**
+ * This class is a converter from one avro to another with a configuration file
+ * it also validates requires fields are provided in configuration,
+ * the convert has to have same field values on input and output schema, there are validation for that
+ */
 public class AvroToAvroConverter {
     private final static Logger LOGGER = Logger.getLogger(AvroToAvroConverter.class.getName());
     private final static String INPUT_FIELD_ERROR = "Could not find a field named: %s on input schema: %s";
@@ -42,20 +49,15 @@ public class AvroToAvroConverter {
 
         while (outputPath.size() > 1) {
             field = getNextField(outputPath, schema, OUTPUT_FIELD_ERROR);
-            ;
             schema = field.schema();
-
             initNewInstanceIfNeeded(currentRecord, schema, field);
             currentRecord = getInnerRecord(currentRecord, field);
         }
 
         field = getNextField(outputPath, schema, OUTPUT_FIELD_ERROR);
-        ;
-
         schema = field.schema();
 
-        value = getEnumValueIfNeeded(value, schema);
-
+        value = getValueForEnum(value, schema);
         tryPutingRecord(value, fieldOutName, currentRecord, schema);
     }
 
@@ -69,7 +71,7 @@ public class AvroToAvroConverter {
         }
     }
 
-    private static Object getEnumValueIfNeeded(Object value, Schema schema) {
+    private static Object getValueForEnum(Object value, Schema schema) {
         if (schema.getType() == Schema.Type.ENUM) {
             value = SpecificData.get().createEnum(value.toString(), schema);
         }
@@ -89,14 +91,28 @@ public class AvroToAvroConverter {
     }
 
     private static Schema.Field tryGettingFieldFromSchema(Schema schema, String currentPath, String errorMessage) {
-        Schema.Field field = schema.getField(currentPath);
+        if (schema.isUnion()) {
+            schema = getUnionSchema(schema);
+        }
 
+        Schema.Field field = schema.getField(currentPath);
         Objects.requireNonNull(field, String.format(errorMessage, currentPath, schema.getFullName()));
         return field;
     }
 
+    private static Schema getUnionSchema(Schema schema) {
+        schema = schema.getTypes()
+                .stream()
+                .filter(schema1 -> schema1.getType() != Schema.Type.NULL)
+                .reduce((a, b) -> {
+                    throw new IllegalStateException("Multiple elements: " + a + ", " + b);
+                })
+                .get();
+        return schema;
+    }
+
     /**
-     * This function checks if currentRecord is initialized in hierarchy if not initialize it
+     * This function checks if currentRecord is initialized in hierarchy, if not it initializes it
      *
      * @param currentRecord record to check
      * @param schema        schema to create into the current record
@@ -176,9 +192,7 @@ public class AvroToAvroConverter {
             Schema outputSchema) {
 
         Objects.requireNonNull(outputSchema, "output Schema must contain a valid value");
-
         saveRequiredFields(outputSchema);
-
         checkRequiredFieldsProvidedInConfig(fieldConfigurations);
 
         SpecificRecordBase outputRecord;
@@ -196,17 +210,13 @@ public class AvroToAvroConverter {
      * This function converts with a given configuration from an input record to an out *existing* output record
      * Caution : it modifies the output record and can overwrite existing fields,
      * but not the parameter reference only by its return value
-     * <p>
-     * //TODO: this function cannot be public for now - there is a problem when using it on existing record
-     * default behavior  will allow required fields to be init sometimes to type default value -
-     * for example int will be defaulted to 0
      *
      * @param fieldConfigurations field configuration to convert
      * @param inputRecord         input record to convert from
      * @param outputRecord        output record to convert to
      * @return modified and converted output record
      */
-    private static Optional<SpecificRecordBase> convertToExistingRecord(
+    public static Optional<SpecificRecordBase> convertToExistingRecord(
             List<FieldConfiguration> fieldConfigurations,
             SpecificRecordBase inputRecord,
             SpecificRecordBase outputRecord) {

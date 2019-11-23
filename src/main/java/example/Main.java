@@ -25,7 +25,7 @@ public class Main {
         return BdPerson.newBuilder()
                 .setIdentification(
                         Identification.newBuilder()
-                                .setId(2)
+                                //.setId(2)
                                 .setUsername("sharone")
                                 .build())
                 .setUsername("mrscarter")
@@ -41,16 +41,18 @@ public class Main {
                 .build();
     }
 
-//    private static SpecificRecordBase generateOutputRecordExample() {
-//        return BdPersonOut.newBuilder()
-//                .setIdentificationout(
-//                        IdentificationOut.newBuilder()
-//                                .setIdout(55)
-//                                .setUsernameout("sharone")
-//                                .build())
-//                .setHeight(1.84)
-//                .build();
-//    }
+    private static SpecificRecordBase generateOutputRecordExample() {
+        return BdPersonOut.newBuilder()
+                .setIdentificationout(
+                        IdentificationOut.newBuilder()
+                                //  .setUsernameout("sharone1")
+                                .build())
+                .setHeight(1.84)
+                .setCardsout(CardsOut.DIAMONDS)
+                .setChildrenout(new ArrayList<>())
+                .setAdditionalout(new HashMap<>())
+                .build();
+    }
 
     // TODO: this configuration should read from configfile or json
     private static List<FieldConfiguration> generateExampleConfig() {
@@ -59,18 +61,18 @@ public class Main {
         Queue<String> outputPath;
 
         // Try Copy a initialized field on input record
-        inputPath = new LinkedList<>();
-        inputPath.add("identification");
-        inputPath.add("id");
-
-        outputPath = new LinkedList<>();
-        outputPath.add("identificationout");
-        outputPath.add("idout");
-
-        fieldConfigurations.add(new FieldConfiguration(
-                "idout",
-                inputPath,
-                outputPath));
+//        inputPath = new LinkedList<>();
+//        inputPath.add("identification");
+//        inputPath.add("id");
+//
+//        outputPath = new LinkedList<>();
+//        outputPath.add("identificationout");
+//        outputPath.add("idout");
+//
+//        fieldConfigurations.add(new FieldConfiguration(
+//                "idout",
+//                inputPath,
+//                outputPath));
 
         // Try Copy a non initialized field on input record
         inputPath = new LinkedList<>();
@@ -139,24 +141,23 @@ public class Main {
         LOGGER.info("converting failed");
     }
 
-//    private static void exampleConvertExistingRecord() {
-//        List<FieldConfiguration> fieldConfigurations = generateExampleConfig();
-//        SpecificRecordBase inputRecord = generateInputRecordExample();
-//        SpecificRecordBase outRecordExample = generateOutputRecordExample();
-//
-//        Optional<SpecificRecordBase> outRecord = AvroToAvroConverter.convertToExistingRecord(fieldConfigurations, inputRecord, outRecordExample);
-//        if (outRecord.isPresent()) {
-//            LOGGER.info("After converting out existing record is: " + outRecord.get());
-//            return;
-//        }
-//
-//        LOGGER.info("converting failed");
-//    }
+    private static void exampleConvertExistingRecord() {
+        List<FieldConfiguration> fieldConfigurations = generateExampleConfig();
+        SpecificRecordBase inputRecord = generateInputRecordExample();
+        SpecificRecordBase outRecordExample = generateOutputRecordExample();
+
+        Optional<SpecificRecordBase> outRecord = AvroToAvroConverter.convertToExistingRecord(fieldConfigurations, inputRecord, outRecordExample);
+        if (outRecord.isPresent()) {
+            LOGGER.info("After converting out existing record is: " + outRecord.get());
+            return;
+        }
+
+        LOGGER.info("converting failed");
+    }
 
     public static void main(String[] args) {
         exampleConvertNewRecord();
 
-        //TODO: currently existing record does not work on all cases - more info inside convertToExistingRecord
-        //exampleConvertExistingRecord();
+        exampleConvertExistingRecord();
     }
 }
