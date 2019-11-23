@@ -11,7 +11,18 @@ public class Main {
     private final static Logger LOGGER = Logger.getLogger(Main.class.getName());
 
     private static SpecificRecordBase generateInputRecordExample() {
-        BdPerson person = BdPerson.newBuilder()
+        Child child1 = Child.newBuilder().setName("noob").build();
+        Child child2 = Child.newBuilder().setName("noob2").build();
+
+        List<Child> children = new ArrayList<>();
+        children.add(child1);
+        children.add(child2);
+
+        Map<String, String> additional = new HashMap<>();
+        additional.put("shit1", "shit2");
+        additional.put("shit3", "shit4");
+
+        return BdPerson.newBuilder()
                 .setIdentification(
                         Identification.newBuilder()
                                 .setId(2)
@@ -25,21 +36,21 @@ public class Main {
                 .setMiddleName("kaka")
                 .setSex("Man")
                 .setCards(Cards.CLUBS)
-                .build();
-
-        return person;
-    }
-
-    private static SpecificRecordBase generateOutputRecordExample() {
-        return BdPersonOut.newBuilder()
-                .setIdentificationout(
-                        IdentificationOut.newBuilder()
-                                .setIdout(55)
-                                .setUsernameout("sharone")
-                                .build())
-                .setHeight(1.84)
+                .setChildren(children)
+                .setAdditional(additional)
                 .build();
     }
+
+//    private static SpecificRecordBase generateOutputRecordExample() {
+//        return BdPersonOut.newBuilder()
+//                .setIdentificationout(
+//                        IdentificationOut.newBuilder()
+//                                .setIdout(55)
+//                                .setUsernameout("sharone")
+//                                .build())
+//                .setHeight(1.84)
+//                .build();
+//    }
 
     // TODO: this configuration should read from configfile or json
     private static List<FieldConfiguration> generateExampleConfig() {
@@ -75,15 +86,39 @@ public class Main {
                 inputPath,
                 outputPath));
 
-        // Try Copy a non initialized field on input record
         inputPath = new LinkedList<>();
         inputPath.add("cards");
 
         outputPath = new LinkedList<>();
         outputPath.add("cardsout");
 
+
         fieldConfigurations.add(new FieldConfiguration(
                 "cardsout",
+                inputPath,
+                outputPath));
+
+
+        // Try Copy a non initialized field on input record
+        inputPath = new LinkedList<>();
+        inputPath.add("children");
+
+        outputPath = new LinkedList<>();
+        outputPath.add("childrenout");
+
+        fieldConfigurations.add(new FieldConfiguration(
+                "childrenout",
+                inputPath,
+                outputPath));
+
+        inputPath = new LinkedList<>();
+        inputPath.add("additional");
+
+        outputPath = new LinkedList<>();
+        outputPath.add("additionalout");
+
+        fieldConfigurations.add(new FieldConfiguration(
+                "additionalout",
                 inputPath,
                 outputPath));
 

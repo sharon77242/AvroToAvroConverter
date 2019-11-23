@@ -10,7 +10,6 @@ import java.util.logging.Logger;
 
 // TODO: add unit tests
 // TODO: add documentation
-// TODO: check this works for arrays!!
 public class AvroToAvroConverter {
     private final static Logger LOGGER = Logger.getLogger(AvroToAvroConverter.class.getName());
     private final static String INPUT_FIELD_ERROR = "Could not find a field named: %s on input schema: %s";
@@ -20,21 +19,14 @@ public class AvroToAvroConverter {
     private static Object getInputRecordValue(SpecificRecordBase inputRecord, Queue<String> inputPath) {
         SpecificRecordBase currentRecord = inputRecord;
         Schema schema = inputRecord.getSchema();
-        String currentInputPath;
 
         while (inputPath.size() > 1) {
-            currentInputPath = inputPath.remove();
-
-            Schema.Field field = tryGettingFieldFromSchema(schema, currentInputPath, INPUT_FIELD_ERROR);
-
+            Schema.Field field = getNextField(inputPath, schema, INPUT_FIELD_ERROR);
             schema = field.schema();
-
             currentRecord = getInnerRecord(currentRecord, field);
         }
 
-        currentInputPath = inputPath.remove();
-
-        Schema.Field field = tryGettingFieldFromSchema(schema, currentInputPath, INPUT_FIELD_ERROR);
+        Schema.Field field = getNextField(inputPath, schema, INPUT_FIELD_ERROR);
 
         return currentRecord.get(field.pos());
     }
@@ -47,34 +39,49 @@ public class AvroToAvroConverter {
         SpecificRecordBase currentRecord = outputRecord;
         Schema schema = outputRecord.getSchema();
         Schema.Field field;
-        String currentOutputPath;
 
         while (outputPath.size() > 1) {
-            currentOutputPath = outputPath.remove();
-            field = tryGettingFieldFromSchema(schema, currentOutputPath, OUTPUT_FIELD_ERROR);
-
+            field = getNextField(outputPath, schema, OUTPUT_FIELD_ERROR);
+            ;
             schema = field.schema();
 
             initNewInstanceIfNeeded(currentRecord, schema, field);
-
             currentRecord = getInnerRecord(currentRecord, field);
         }
 
-        currentOutputPath = outputPath.remove();
-        field = tryGettingFieldFromSchema(schema, currentOutputPath, OUTPUT_FIELD_ERROR);
+        field = getNextField(outputPath, schema, OUTPUT_FIELD_ERROR);
+        ;
+
         schema = field.schema();
 
-        try {
-            if (schema.getType() == Schema.Type.ENUM) {
-                value = SpecificData.get().createEnum(value.toString(), schema);
-            }
+        value = getEnumValueIfNeeded(value, schema);
 
+        tryPutingRecord(value, fieldOutName, currentRecord, schema);
+    }
+
+    private static void tryPutingRecord(Object value, String fieldOutName, SpecificRecordBase currentRecord, Schema schema) {
+        try {
             currentRecord.put(fieldOutName, value);
         } catch (ClassCastException e) {
             throw new RuntimeException(String.format(
                     "Could not cast field %s because of different type on input schema %s than expected %s on output schema",
                     fieldOutName, value.getClass(), schema.getFullName()));
         }
+    }
+
+    private static Object getEnumValueIfNeeded(Object value, Schema schema) {
+        if (schema.getType() == Schema.Type.ENUM) {
+            value = SpecificData.get().createEnum(value.toString(), schema);
+        }
+
+        return value;
+    }
+
+    private static Schema.Field getNextField(Queue<String> path, Schema schema, String errorMessage) {
+        String currentInputPath;
+        currentInputPath = path.remove();
+
+        return tryGettingFieldFromSchema(schema, currentInputPath, errorMessage);
     }
 
     private static SpecificRecordBase getInnerRecord(SpecificRecordBase currentRecord, Schema.Field field) {
@@ -123,16 +130,7 @@ public class AvroToAvroConverter {
 
     private static boolean primitiveField(Schema.Field field) {
         Schema.Type type = field.schema().getType();
-        return type == Schema.Type.BOOLEAN ||
-                type == Schema.Type.BYTES ||
-                type == Schema.Type.DOUBLE ||
-                type == Schema.Type.ENUM ||
-                type == Schema.Type.FIXED ||
-                type == Schema.Type.FLOAT ||
-                type == Schema.Type.INT ||
-                type == Schema.Type.LONG ||
-                type == Schema.Type.STRING ||
-                type == Schema.Type.UNION;
+        return type != Schema.Type.RECORD;
     }
 
     private static void saveRequiredFields(Schema outputSchema) {

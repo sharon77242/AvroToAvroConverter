@@ -3,43 +3,66 @@
   "type": "record",
   "name": "BdPersonOut",
   "fields": [
-    {
-      "name": "identificationout",
-      "type": {
-        "name": "IdentificationOut",
+  {
+    "name": "identificationout",
+    "type": {
+      "name": "IdentificationOut",
+      "type": "record",
+      "fields": [
+      {
+        "name": "idout",
+        "type": "int"
+      },
+      {
+        "name": "usernameout",
+        "type": "string"
+      }
+      ]
+    }
+  },
+  {
+    "name": "height",
+    "type": [
+      "null",
+      "double"
+    ],
+    "default": null
+  },
+  {
+    "name": "cardsout",
+    "type": {
+      "type": "enum",
+      "name": "CardsOut",
+      "symbols": [
+        "SPADES",
+        "HEARTS",
+        "DIAMONDS",
+        "CLUBS"
+      ]
+    }
+  },
+  {
+    "name": "childrenout",
+    "type": {
+      "type": "array",
+      "items": {
+        "name": "Child",
         "type": "record",
         "fields": [
-          {
-            "name": "idout",
-            "type": "int"
-          },
-          {
-            "name": "usernameout",
-            "type": "string"
-          }
-        ]
-      }
-    },
-    {
-      "name": "height",
-      "type": [
-        "null",
-        "double"
-      ],
-      "default": null
-    },
-    {
-      "name": "cardsout",
-      "type": {
-        "type": "enum",
-        "name": "CardsOut",
-        "symbols": [
-          "SPADES",
-          "HEARTS",
-          "DIAMONDS",
-          "CLUBS"
+        {
+          "name": "name",
+          "type": "string"
+        }
         ]
       }
     }
+  },
+  {
+    "name": "additionalout",
+    "type": {
+      "type": "map",
+      "values": "string"
+    }
+  }
   ]
 }
