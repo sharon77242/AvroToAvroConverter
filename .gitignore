@@ -24,3 +24,5 @@ hs_err_pid*
 
 src/main/java/example/generated/
 target/
+*.iml
+.idea/
