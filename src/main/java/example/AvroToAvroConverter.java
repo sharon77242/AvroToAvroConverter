@@ -10,7 +10,7 @@ import java.util.logging.Logger;
 
 // TODO: add unit tests
 // TODO: add documentation
-// TODO: check this works for arrays and enums!!
+// TODO: check this works for arrays!!
 public class AvroToAvroConverter {
     private final static Logger LOGGER = Logger.getLogger(AvroToAvroConverter.class.getName());
     private final static String INPUT_FIELD_ERROR = "Could not find a field named: %s on input schema: %s";
@@ -47,7 +47,7 @@ public class AvroToAvroConverter {
         SpecificRecordBase currentRecord = outputRecord;
         Schema schema = outputRecord.getSchema();
         Schema.Field field;
-        String currentOutputPath = null;
+        String currentOutputPath;
 
         while (outputPath.size() > 1) {
             currentOutputPath = outputPath.remove();
@@ -65,6 +65,10 @@ public class AvroToAvroConverter {
         schema = field.schema();
 
         try {
+            if (schema.getType() == Schema.Type.ENUM) {
+                value = SpecificData.get().createEnum(value.toString(), schema);
+            }
+
             currentRecord.put(fieldOutName, value);
         } catch (ClassCastException e) {
             throw new RuntimeException(String.format(

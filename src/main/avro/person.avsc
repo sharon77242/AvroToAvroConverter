@@ -3,75 +3,92 @@
   "type": "record",
   "name": "BdPerson",
   "fields": [
-  {
-    "name": "identification",
-    "type": {
-      "name": "Identification",
-      "type": "record",
-      "fields": [
-      {
-        "name": "id",
-        "type": "int"
-      },
-      {
-        "name": "username",
-        "type": [
-          "null",
-          "string"
-        ],
-        "default": null
+    {
+      "name": "identification",
+      "type": {
+        "name": "Identification",
+        "type": "record",
+        "fields": [
+          {
+            "name": "id",
+            "type": "int"
+          },
+          {
+            "name": "username",
+            "type": [
+              "null",
+              "string"
+            ],
+            "default": null
+          }
+        ]
       }
+    },
+    {
+      "name": "cards",
+      "type": [
+        "null",
+        {
+          "type": "enum",
+          "name": "Cards",
+          "symbols": [
+            "SPADES",
+            "HEARTS",
+            "DIAMONDS",
+            "CLUBS"
+          ]
+        }
+      ],
+      "default": null
+    },
+    {
+      "name": "username",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    {
+      "name": "phone_number",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    {
+      "name": "first_name",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    {
+      "name": "last_name",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    {
+      "name": "middle_name",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    {
+      "name": "sex",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    {
+      "name": "birthdate",
+      "type": [
+        "string",
+        "null"
       ]
     }
-  },
-  {
-    "name": "username",
-    "type": [
-      "string",
-      "null"
-    ]
-  },
-  {
-    "name": "phone_number",
-    "type": [
-      "string",
-      "null"
-    ]
-  },
-  {
-    "name": "first_name",
-    "type": [
-      "string",
-      "null"
-    ]
-  },
-  {
-    "name": "last_name",
-    "type": [
-      "string",
-      "null"
-    ]
-  },
-  {
-    "name": "middle_name",
-    "type": [
-      "string",
-      "null"
-    ]
-  },
-  {
-    "name": "sex",
-    "type": [
-      "string",
-      "null"
-    ]
-  },
-  {
-    "name": "birthdate",
-    "type": [
-      "string",
-      "null"
-    ]
-  }
   ]
 }

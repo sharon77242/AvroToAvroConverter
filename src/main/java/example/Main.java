@@ -1,9 +1,6 @@
 package example;
 
-import example.generated.BdPerson;
-import example.generated.BdPersonOut;
-import example.generated.Identification;
-import example.generated.IdentificationOut;
+import example.generated.*;
 import org.apache.avro.Schema;
 import org.apache.avro.specific.SpecificRecordBase;
 
@@ -14,7 +11,7 @@ public class Main {
     private final static Logger LOGGER = Logger.getLogger(Main.class.getName());
 
     private static SpecificRecordBase generateInputRecordExample() {
-        return BdPerson.newBuilder()
+        BdPerson person = BdPerson.newBuilder()
                 .setIdentification(
                         Identification.newBuilder()
                                 .setId(2)
@@ -27,7 +24,10 @@ public class Main {
                 .setPhoneNumber("555555555")
                 .setMiddleName("kaka")
                 .setSex("Man")
+                .setCards(Cards.CLUBS)
                 .build();
+
+        return person;
     }
 
     private static SpecificRecordBase generateOutputRecordExample() {
@@ -46,8 +46,8 @@ public class Main {
         List<FieldConfiguration> fieldConfigurations = new ArrayList<>();
         Queue<String> inputPath;
         Queue<String> outputPath;
-        // Try Copy a initialized field on input record
 
+        // Try Copy a initialized field on input record
         inputPath = new LinkedList<>();
         inputPath.add("identification");
         inputPath.add("id");
@@ -62,7 +62,6 @@ public class Main {
                 outputPath));
 
         // Try Copy a non initialized field on input record
-
         inputPath = new LinkedList<>();
         inputPath.add("identification");
         inputPath.add("username");
@@ -76,13 +75,25 @@ public class Main {
                 inputPath,
                 outputPath));
 
+        // Try Copy a non initialized field on input record
+        inputPath = new LinkedList<>();
+        inputPath.add("cards");
+
+        outputPath = new LinkedList<>();
+        outputPath.add("cardsout");
+
+        fieldConfigurations.add(new FieldConfiguration(
+                "cardsout",
+                inputPath,
+                outputPath));
+
         return fieldConfigurations;
     }
 
     private static void exampleConvertNewRecord() {
         List<FieldConfiguration> fieldConfigurations = generateExampleConfig();
         SpecificRecordBase inputRecord = generateInputRecordExample();
-        Schema outSchemaExample = BdPersonOut.getClassSchema();
+        Schema outSchemaExample = BdPersonOut.SCHEMA$;
 
         Optional<SpecificRecordBase> outRecord = AvroToAvroConverter.convertToNewRecord(fieldConfigurations, inputRecord, outSchemaExample);
         if (outRecord.isPresent()) {
