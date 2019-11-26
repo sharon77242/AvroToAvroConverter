@@ -11,7 +11,6 @@ import java.util.logging.Logger;
 // TODO: add unit tests
 // TODO: add documentation
 
-
 /**
  * This class is a converter from one avro to another with a configuration file
  * it also validates requires fields are provided in configuration,
@@ -119,10 +118,10 @@ public class AvroToAvroConverter {
      * @param field         field to create into current record
      * @throws ClassNotFoundException thrown when try to init an invalid field type
      */
-    private static void initNewInstanceIfNeeded(SpecificRecordBase currentRecord, Schema schema, Schema.Field field) throws ClassNotFoundException {
+    private static void initNewInstanceIfNeeded(SpecificRecordBase currentRecord, Schema schema, Schema.Field field)
+            throws ClassNotFoundException {
         if (getInnerRecord(currentRecord, field) == null) {
             Object newInstance = createNewInstance(schema);
-
             Objects.requireNonNull(newInstance, String.format("Could not create for field with schema %s", schema));
 
             currentRecord.put(field.name(), newInstance);
@@ -130,6 +129,10 @@ public class AvroToAvroConverter {
     }
 
     private static Object createNewInstance(Schema schema) throws ClassNotFoundException {
+        if (schema.isUnion()) {
+            schema = getUnionSchema(schema);
+        }
+
         return SpecificData.newInstance(Class.forName(schema.getFullName()), schema);
     }
 
@@ -137,10 +140,9 @@ public class AvroToAvroConverter {
             List<FieldConfiguration> fieldConfigurations,
             SpecificRecordBase inputRecord,
             SpecificRecordBase outputRecord) {
+
         Objects.requireNonNull(fieldConfigurations, "field Configurations must contain a valid value");
-
         Objects.requireNonNull(inputRecord, "input Record must contain a valid value");
-
         Objects.requireNonNull(outputRecord, "output Record must contain a valid value");
     }
 

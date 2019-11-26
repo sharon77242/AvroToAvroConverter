@@ -5,28 +5,28 @@
   "fields": [
   {
     "name": "identificationout",
-    "type": {
-      "name": "IdentificationOut",
-      "type": "record",
-      "fields": [
+    "type": [
+      "null",
       {
-        "name": "idout",
-        "type": [
-          "null",
-          "int"
-        ],
-        "default": null
-      },
-      {
-        "name": "usernameout",
-        "type": [
-          "null",
-          "string"
-        ],
-        "default": null
+        "name": "IdentificationOut",
+        "type": "record",
+        "fields": [
+        {
+          "name": "id",
+          "type": "int"
+        },
+        {
+          "name": "usernameout",
+          "type": [
+            "null",
+            "string"
+          ],
+          "default": null
+        }
+        ]
       }
-      ]
-    }
+    ],
+    "default": null
   },
   {
     "name": "height",

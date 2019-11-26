@@ -2,6 +2,7 @@ package example;
 
 import example.generated.*;
 import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.specific.SpecificRecordBase;
 
 import java.util.*;
@@ -43,10 +44,11 @@ public class Main {
 
     private static SpecificRecordBase generateOutputRecordExample() {
         return BdPersonOut.newBuilder()
-                .setIdentificationout(
-                        IdentificationOut.newBuilder()
-                                //  .setUsernameout("sharone1")
-                                .build())
+//                .setIdentificationout(
+//                        IdentificationOut.newBuilder()
+//                                .setIdout(3)
+//                                //  .setUsernameout("sharone1")
+//                                .build())
                 .setHeight(1.84)
                 .setCardsout(CardsOut.DIAMONDS)
                 .setChildrenout(new ArrayList<>())
@@ -135,6 +137,8 @@ public class Main {
         Optional<SpecificRecordBase> outRecord = AvroToAvroConverter.convertToNewRecord(fieldConfigurations, inputRecord, outSchemaExample);
         if (outRecord.isPresent()) {
             LOGGER.info("After converting out new record is: " + outRecord.get());
+            LOGGER.info("answer is " + GenericData.get().validate(outRecord.get().getSchema(), outRecord.get()));
+
             return;
         }
 
@@ -149,6 +153,9 @@ public class Main {
         Optional<SpecificRecordBase> outRecord = AvroToAvroConverter.convertToExistingRecord(fieldConfigurations, inputRecord, outRecordExample);
         if (outRecord.isPresent()) {
             LOGGER.info("After converting out existing record is: " + outRecord.get());
+            GenericData g = GenericData.get();
+            LOGGER.info("answer is " + g.validate(outRecord.get().getSchema(), outRecord.get()));
+
             return;
         }
 
@@ -158,6 +165,6 @@ public class Main {
     public static void main(String[] args) {
         exampleConvertNewRecord();
 
-        exampleConvertExistingRecord();
+        //exampleConvertExistingRecord();
     }
 }
