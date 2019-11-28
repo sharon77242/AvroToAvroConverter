@@ -7,26 +7,27 @@ import java.util.*
 import java.util.function.Consumer
 import java.util.logging.Level
 import java.util.logging.Logger
+import kotlin.collections.ArrayList
 
 // TODO: add unit tests
 // TODO: add documentation
+
+private const val INPUT_FIELD_ERROR = "Could not find a field named: %s on input schema: %s"
+private const val OUTPUT_FIELD_ERROR = "Could not find a field named: %s on output schema: %s"
+
 /**
  * This class is a converter from one avro to another with a configuration file
  * it also validates requires fields are provided in configuration,
  * the convert has to have same field values on input and output schema, there are validation for that
  */
-
-private const val INPUT_FIELD_ERROR = "Could not find a field named: %s on input schema: %s"
-private const val OUTPUT_FIELD_ERROR = "Could not find a field named: %s on output schema: %s"
-
 class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConfiguration>, outputSchema: Schema) {
     private val logger: Logger = Logger.getLogger(AvroToAvroConverter::class.java.name)
-    private val requiredFieldsOnOutSchema: MutableList<String> = ArrayList()
+    private val requiredFieldsOnOutSchema: MutableList<Queue<String>> = ArrayList()
 
     init {
         require(fieldConfigurations.isNotEmpty()) { "field configuration must be not empty" }
         checkRequiredFieldsProvidedInConfig(outputSchema)
-        logger.info("Required fields are: ${this.requiredFieldsOnOutSchema}")
+        logger.info("Required field paths are: ${this.requiredFieldsOnOutSchema}")
     }
 
     private fun getInputRecordValue(inputRecord: SpecificRecordBase, inputPath: Queue<String>): Any? {
@@ -45,7 +46,7 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
                                outputPath: Queue<String>,
                                value: Any?,
                                fieldOutName: String) {
-        var value = value
+        var valueCopy = value
         var currentRecord = outputRecord
         var schema = outputRecord.schema
         var field: Schema.Field
@@ -55,15 +56,15 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
             initNewInstanceIfNeeded(currentRecord, schema, field)
             currentRecord = getInnerRecord(currentRecord, field)
         }
-        if (value == null) {
+        if (valueCopy == null) {
             currentRecord.put(fieldOutName, null)
             return
         }
 
         field = getNextField(outputPath, schema, OUTPUT_FIELD_ERROR)
         schema = field.schema()
-        value = getValueForEnum(value, schema)
-        tryPutingRecord(value, fieldOutName, currentRecord, schema)
+        valueCopy = getValueForEnum(valueCopy, schema)
+        tryPutingRecord(valueCopy, fieldOutName, currentRecord, schema)
     }
 
     private fun tryPutingRecord(value: Any, fieldOutName: String, currentRecord: SpecificRecordBase, schema: Schema) {
@@ -93,12 +94,12 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
     }
 
     private fun tryGettingFieldFromSchema(schema: Schema, currentPath: String, errorMessage: String): Schema.Field {
-        var schema = schema
-        if (schema.isUnion) {
-            schema = getUnionSchema(schema)
+        var schemaCopy = schema
+        if (schemaCopy.isUnion) {
+            schemaCopy = getUnionSchema(schemaCopy)
         }
-        val field = schema.getField(currentPath)
-        Objects.requireNonNull(field, String.format(errorMessage, currentPath, schema.fullName))
+        val field = schemaCopy.getField(currentPath)
+        Objects.requireNonNull(field, String.format(errorMessage, currentPath, schemaCopy.fullName))
         return field
     }
 
@@ -126,10 +127,11 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
     }
 
     private fun createNewInstance(schema: Schema): Any {
+        var schemaCopy: Schema = schema
         if (schema.isUnion) {
-            return getUnionSchema(schema)
+            schemaCopy = getUnionSchema(schema)
         }
-        return SpecificData.newInstance(Class.forName(schema.fullName), schema)
+        return SpecificData.newInstance(Class.forName(schemaCopy.fullName), schema)
     }
 
     private fun primitiveField(field: Schema.Field): Boolean {
@@ -149,7 +151,7 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
                         val requiredField = !field.hasDefaultValue()
                         if (requiredField) {
                             throwNonContainedField(fieldName)
-                            requiredFieldsOnOutSchema.add(fieldName)
+                            fieldConfigurations[fieldName]?.outputPath?.let { requiredFieldsOnOutSchema.add(it) }
                         }
                     } else {
                         checkNonPrimitive(field, fieldName)
@@ -184,7 +186,7 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
                               outputRecord: SpecificRecordBase): SpecificRecordBase {
         fieldConfigurations.forEach { (fieldName, conf: FieldConfiguration) ->
             val inputValue = getInputRecordValue(inputRecord, conf.inputPath)
-            if (inputValue == null && requiredFieldsOnOutSchema.contains(fieldName)) {
+            if (inputValue == null && requiredFieldsOnOutSchema.contains(conf.outputPath)) {
                 throw RuntimeException("Input record did not contain value for a required field: $fieldName")
             }
             putToOutRecord(outputRecord, conf.outputPath, inputValue, fieldName)
@@ -207,7 +209,6 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
         return try {
             outputRecord = createNewInstance(outputSchema) as SpecificRecordBase
             baseConverter(inputRecord, outputRecord)
-
         } catch (e: Exception) {
             logger.log(Level.SEVERE, "Error occurred: ", e)
             null
@@ -229,7 +230,6 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
         val outputRecordCopy: SpecificRecordBase
         return try {
             outputRecordCopy = SpecificData.get().deepCopy(outputRecord.schema, outputRecord)
-
             baseConverter(inputRecord, outputRecordCopy)
         } catch (e: Exception) {
             logger.log(Level.SEVERE, "Error occurred: ", e)

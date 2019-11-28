@@ -122,7 +122,7 @@ object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        //exampleConvertNewRecord()
+        exampleConvertNewRecord()
         exampleConvertExistingRecord();
     }
 }
