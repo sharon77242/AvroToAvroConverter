@@ -22,12 +22,12 @@ private const val OUTPUT_FIELD_ERROR = "Could not find a field named: %s on outp
  */
 class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConfiguration>, outputSchema: Schema) {
     private val logger: Logger = Logger.getLogger(AvroToAvroConverter::class.java.name)
-    private val requiredFieldsOnOutSchema: MutableList<Queue<String>> = ArrayList()
+    private val requiredFieldsPathOnOutSchema: MutableList<Queue<String>> = ArrayList()
 
     init {
         require(fieldConfigurations.isNotEmpty()) { "field configuration must be not empty" }
         checkRequiredFieldsProvidedInConfig(outputSchema)
-        logger.info("Required field paths are: ${this.requiredFieldsOnOutSchema}")
+        logger.info("Required field paths are: ${this.requiredFieldsPathOnOutSchema}")
     }
 
     private fun getInputRecordValue(inputRecord: SpecificRecordBase, inputPath: Queue<String>): Any? {
@@ -156,7 +156,7 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
                         val requiredField = !field.hasDefaultValue()
                         if (requiredField) {
                             throwNonContainedField(fieldName)
-                            fieldConfigurations[fieldName]?.outputPath?.let { requiredFieldsOnOutSchema.add(it) }
+                            fieldConfigurations[fieldName]?.outputPath?.let { requiredFieldsPathOnOutSchema.add(it) }
                         }
                     } else {
                         checkNonPrimitive(field, fieldName)
@@ -191,7 +191,7 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
                               outputRecord: SpecificRecordBase): SpecificRecordBase {
         fieldConfigurations.forEach { (fieldName, conf: FieldConfiguration) ->
             val inputValue = getInputRecordValue(inputRecord, conf.inputPath)
-            if (inputValue == null && requiredFieldsOnOutSchema.contains(conf.outputPath)) {
+            if (inputValue == null && requiredFieldsPathOnOutSchema.contains(conf.outputPath)) {
                 throw RuntimeException("Input record did not contain value for a required field: $fieldName")
             }
             putToOutRecord(outputRecord, conf.outputPath, inputValue, fieldName)
