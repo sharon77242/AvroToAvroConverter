@@ -31,15 +31,20 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
     }
 
     private fun getInputRecordValue(inputRecord: SpecificRecordBase, inputPath: Queue<String>): Any? {
-        var currentRecord = inputRecord
+        var currentRecord: SpecificRecordBase? = inputRecord
         var schema = inputRecord.schema
         while (inputPath.size > 1) {
             val field = getNextField(inputPath, schema, INPUT_FIELD_ERROR)
+            currentRecord = getInnerRecord(currentRecord!!, field)
+
+            if (currentRecord == null) {
+                return null;
+            }
+
             schema = field.schema()
-            currentRecord = getInnerRecord(currentRecord, field)
         }
         val field = getNextField(inputPath, schema, INPUT_FIELD_ERROR)
-        return currentRecord[field.pos()]
+        return currentRecord!![field.pos()]
     }
 
     private fun putToOutRecord(outputRecord: SpecificRecordBase,
@@ -54,7 +59,7 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
             field = getNextField(outputPath, schema, OUTPUT_FIELD_ERROR)
             schema = field.schema()
             initNewInstanceIfNeeded(currentRecord, schema, field)
-            currentRecord = getInnerRecord(currentRecord, field)
+            currentRecord = getInnerRecord(currentRecord, field)!!
         }
         if (valueCopy == null) {
             currentRecord.put(fieldOutName, null)
@@ -89,8 +94,8 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
         return tryGettingFieldFromSchema(schema, currentInputPath, errorMessage)
     }
 
-    private fun getInnerRecord(currentRecord: SpecificRecordBase, field: Schema.Field): SpecificRecordBase {
-        return currentRecord[field.pos()] as SpecificRecordBase
+    private fun getInnerRecord(currentRecord: SpecificRecordBase, field: Schema.Field): SpecificRecordBase? {
+        return currentRecord[field.pos()] as SpecificRecordBase?
     }
 
     private fun tryGettingFieldFromSchema(schema: Schema, currentPath: String, errorMessage: String): Schema.Field {
@@ -99,7 +104,7 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
             schemaCopy = getUnionSchema(schemaCopy)
         }
         val field = schemaCopy.getField(currentPath)
-        Objects.requireNonNull(field, String.format(errorMessage, currentPath, schemaCopy.fullName))
+        requireNotNull(field, {String.format(errorMessage, currentPath, schemaCopy.fullName)})
         return field
     }
 
@@ -121,12 +126,12 @@ class AvroToAvroConverter(private val fieldConfigurations: Map<String, FieldConf
     private fun initNewInstanceIfNeeded(currentRecord: SpecificRecordBase, schema: Schema, field: Schema.Field) {
         if (currentRecord[field.pos()] == null) {
             val newInstance = createNewInstance(schema)
-            Objects.requireNonNull(newInstance, String.format("Could not create for field with schema %s", schema))
+            requireNotNull(newInstance, {"Could not create for field with schema  $schema"})
             currentRecord.put(field.name(), newInstance)
         }
     }
 
-    private fun createNewInstance(schema: Schema): Any {
+    private fun createNewInstance(schema: Schema): Any? {
         var schemaCopy: Schema = schema
         if (schema.isUnion) {
             schemaCopy = getUnionSchema(schema)

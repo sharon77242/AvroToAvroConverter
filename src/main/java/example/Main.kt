@@ -20,7 +20,7 @@ object Main {
                 .setIdentification(
                         Identification.newBuilder()
                                 .setId(2)
-                                //.setUsername("sharone")
+                                .setUsername("sharone")
                                 .build())
                 .setUsername("mrscarter")
                 .setFirstName("Beyonce")
@@ -123,6 +123,7 @@ object Main {
     @JvmStatic
     fun main(args: Array<String>) {
         exampleConvertNewRecord()
+        LOGGER.info("||||||||||||||||||||||||||||||||||||||||")
         exampleConvertExistingRecord();
     }
 }
