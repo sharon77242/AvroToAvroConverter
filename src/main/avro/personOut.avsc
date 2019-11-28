@@ -12,7 +12,7 @@
         "type": "record",
         "fields": [
         {
-          "name": "id",
+          "name": "idout",
           "type": "int"
         },
         {
